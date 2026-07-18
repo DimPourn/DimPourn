@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render the profile's SVGs: terminal window, contributions chart, stats.
+"""Render the profile's SVGs: terminal window and stats.
 
 Everything is drawn as self-contained SVGs (GitHub does not render ANSI
 colors in README code fences, and external card services are flaky).
@@ -22,15 +22,11 @@ DIM = "#8b949e"
 CYAN = "#4dd8e6"
 GREEN = "#3fb950"
 BRIGHT = "#f0f6fc"
-CAL = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]  # GitHub's own greens
 
 FONT = "ui-monospace,'SF Mono',SFMono-Regular,Menlo,Consolas,monospace"
 FS = 13          # font size
 LH = 19          # line height
 CW = 7.85        # approx monospace char width at FS
-
-LEVEL_NAMES = {"NONE": 0, "FIRST_QUARTILE": 1, "SECOND_QUARTILE": 2,
-               "THIRD_QUARTILE": 3, "FOURTH_QUARTILE": 4}
 
 
 def gql(token, query, variables):
@@ -172,40 +168,6 @@ def render_terminal():
     return window(width, height, "dimitris@sec — zsh", "\n  ".join(body))
 
 
-# ══ contributions.svg — GitHub-green fading calendar ═══════════════
-
-CAL_QUERY = """
-query($login: String!) { user(login: $login) { contributionsCollection {
-  contributionCalendar { totalContributions
-    weeks { contributionDays { contributionLevel } } } } } }
-"""
-
-def render_contributions(token):
-    weeks, total = [[0] * 7 for _ in range(53)], None
-    if token:
-        try:
-            cal = gql(token, CAL_QUERY, {"login": LOGIN})["user"]["contributionsCollection"]["contributionCalendar"]
-            weeks = [[LEVEL_NAMES.get(day["contributionLevel"], 0)
-                      for day in w["contributionDays"]] for w in cal["weeks"]]
-            total = cal["totalContributions"]
-        except Exception as exc:
-            print(f"calendar fetch failed ({exc}); placeholder")
-    cell, gap, x0, top = 11, 3, 24, 38 + 30
-    cols = len(weeks)
-    width = max(880, x0 * 2 + cols * (cell + gap) - gap)
-    x0 = (width - (cols * (cell + gap) - gap)) // 2
-    body = [tline(24, 38 + 24, prompt("./contributions.sh"), 0)]
-    for wi, week in enumerate(weeks):
-        delay = 0.25 + wi * 0.02
-        for di, level in enumerate(week):
-            body.append(f'<rect class="f" x="{x0 + wi * (cell + gap)}" y="{top + 14 + di * (cell + gap)}" '
-                        f'width="{cell}" height="{cell}" rx="2.5" fill="{CAL[level]}" '
-                        f'style="animation-delay:{delay:.2f}s"/>')
-    y = top + 14 + 7 * (cell + gap) + 18
-    label = f"{total} contributions in the last year" if total is not None else "contributions sync pending…"
-    body.append(tline(width - x0 - len(label) * CW, y, [(label, DIM, False)], 0.25 + cols * 0.02 + 0.4))
-    return window(width, y + 18, "dimitris@sec — contributions", "\n  ".join(body))
-
 
 # ══ stats.svg — repos / stars / followers / language bar ═══════════
 
@@ -271,7 +233,6 @@ def main():
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     os.makedirs(ASSETS, exist_ok=True)
     for name, svg in (("terminal.svg", render_terminal()),
-                      ("contributions.svg", render_contributions(token)),
                       ("stats.svg", render_stats(token))):
         path = os.path.join(ASSETS, name)
         with open(path, "w", encoding="utf-8") as f:

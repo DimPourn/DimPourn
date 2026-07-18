@@ -6,8 +6,6 @@
 
 <img src="assets/terminal.svg" width="100%" alt="Terminal: neofetch — cybersecurity-focused Information Science student at AUEB, Athens. Stack: Nmap, Metasploit, Hydra, Wireshark, fail2ban, Docker, Tailscale, Python, Java, Bash, Kali Linux. Open to security internships and junior roles.">
 
-<img src="assets/contributions.svg" width="100%" alt="Contribution calendar for the last year, animated.">
-
-<img src="assets/stats.svg" width="100%" alt="Repository, star, follower and language statistics.">
+<img src="assets/stats.svg" width="100%" alt="Repository, contribution and language statistics.">
 
 </div>
