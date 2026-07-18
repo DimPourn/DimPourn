@@ -211,23 +211,22 @@ def render_contributions(token):
 
 STATS_QUERY = """
 query($login: String!) { user(login: $login) {
-  followers { totalCount }
+  contributionsCollection { contributionCalendar { totalContributions } }
   repositories(first: 100, ownerAffiliations: OWNER, privacy: PUBLIC, isFork: false) {
     totalCount
-    nodes { stargazerCount languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
+    nodes { languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
       edges { size node { name color } } } } } } }
 """
 
 def render_stats(token):
-    repos = stars = followers = 0
+    repos = contribs = 0
     langs = {}
     if token:
         try:
             u = gql(token, STATS_QUERY, {"login": LOGIN})["user"]
-            followers = u["followers"]["totalCount"]
+            contribs = u["contributionsCollection"]["contributionCalendar"]["totalContributions"]
             repos = u["repositories"]["totalCount"]
             for node in u["repositories"]["nodes"]:
-                stars += node["stargazerCount"]
                 for e in node["languages"]["edges"]:
                     name, color = e["node"]["name"], e["node"]["color"] or DIM
                     size, _ = langs.get(name, (0, color))
@@ -240,9 +239,9 @@ def render_stats(token):
     body.append(tline(x0, y, prompt("./stats.sh --all"), 0))
     y += LH + 8
     body.append(tline(x0, y, [
-        ("Repos ", DIM, False), (str(repos), BRIGHT, True),
-        ("   Stars ", DIM, False), (str(stars), BRIGHT, True),
-        ("   Followers ", DIM, False), (str(followers), BRIGHT, True),
+        ("Public repos ", DIM, False), (str(repos), BRIGHT, True),
+        ("   Contributions (last year) ", DIM, False), (str(contribs), BRIGHT, True),
+        ("   Base ", DIM, False), ("Athens, GR", BRIGHT, True),
     ], 0.15))
     y += LH + 10
 
