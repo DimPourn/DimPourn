@@ -16,17 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build README (ANSI neofetch block)
-        run: python3 scripts/build_readme.py
-
-      - name: Generate animated contributions SVG
+      - name: Render profile SVGs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 scripts/contributions.py
+        run: python3 scripts/render.py
 
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md assets/contributions.svg
-          git diff --cached --quiet || { git commit -m "chore: rebuild profile"; git push; }
+          git add assets
+          git diff --cached --quiet || { git commit -m "chore: refresh profile assets"; git push; }
